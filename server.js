@@ -27,8 +27,8 @@ app.use('/api/dreams', dreamsRouter);
 
 // Initialize database then start server
 initDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on ${PORT}`);
   });
 }).catch(error => {
   console.error('Failed to initialize database:', error);
