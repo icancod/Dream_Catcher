@@ -1,10 +1,10 @@
+
 import 'dotenv/config';
-console.log("Gemini key loaded:", !!process.env.GEMINI_API_KEY);
-console.log("Gemini model:", process.env.GEMINI_MODEL);
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import helmet from 'helmet'
+import helmet from 'helmet';
+
 import { initDatabase } from './config/database-init.js';
 import dreamsRouter from './routes/dreams.js';
 
@@ -12,24 +12,24 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-
-// Needed for security headers! Do not delete!
-// app.use(helmet());
-
 const PORT = process.env.PORT || 3001;
- 
-// Middleware
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet());
+}
+
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
-// API Routes
 app.use('/api/dreams', dreamsRouter);
 
-// Initialize database then start server
-initDatabase().then(() => {
+try {
+  await initDatabase();
+
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
-}).catch(error => {
-  console.error('Failed to initialize database:', error);
-});
+} catch (error) {
+  console.error('Failed to initialize PostgreSQL database:', error);
+  process.exit(1);
+}

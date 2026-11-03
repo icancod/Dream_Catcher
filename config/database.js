@@ -1,33 +1,21 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import pg from 'pg';
 
-const dbPath = process.env.DATABASE_PATH || join(dirname(__dirname), 'dreams.db');
+const { Pool } = pg;
 
-let db = null;
-
-export async function getDatabase() {
-  if (!db) {
-    db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    });
-    
-    // Enable foreign keys
-    await db.exec('PRAGMA foreign_keys = ON');
-  }
-  return db;
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is missing. Check your environment variables.');
 }
 
-export async function closeDatabase() {
-  if (db) {
-    await db.close();
-    db = null;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
   }
-}
+});
 
-export default { getDatabase, closeDatabase };
+pool.on('error', (error) => {
+  console.error('Unexpected PostgreSQL pool error:', error);
+});
+
+export default pool;
